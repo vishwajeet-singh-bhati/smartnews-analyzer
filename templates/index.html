@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartNews Analyzer - AI-Powered News Analysis</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Plotly for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container-custom {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        /* Input Section */
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .input-section textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Buttons */
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        /* Badges */
+        .badge-custom {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .badge-category {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-positive {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-negative {
+            background: #ef4444;
+            color: white;
+        }
+
+        .badge-neutral {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* Entity Tags */
+        .entity-tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 5px 12px;
+            margin: 4px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Summary Box */
+        .summary-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Sample Articles */
+        .sample-articles {
+            margin-top: 30px;
+        }
+
+        .sample-btn {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sample-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .main-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-brain"></i> SmartNews Analyzer</h1>
+            <p>AI-Powered News Classification, Sentiment Analysis & Entity Recognition</p>
+        </div>
+
+        <!-- Main Input Card -->
+        <div class="main-card">
+            <div class="input-section">
+                <h2><i class="fas fa-edit"></i> Paste Your Article</h2>
+                <textarea 
+                    id="articleText" 
+                    placeholder="Paste a news article here (minimum 50 characters)...
+
+Example: 'Apple Inc. announced record quarterly earnings today, with CEO Tim Cook praising the success of the iPhone 15 launch. The Cupertino-based tech giant reported revenue of $119.6 billion...'"
+                ></textarea>
+            </div>
+
+            <div class="text-center">
+                <button class="btn-analyze" onclick="analyzeArticle()">
+                    <i class="fas fa-magic"></i> Analyze Article
+                </button>
+            </div>
+
+            <!-- Sample Articles -->
+            <div class="sample-articles">
+                <h4><i class="fas fa-lightbulb"></i> Try Sample Articles:</h4>
+                <button class="sample-btn" onclick="loadSample('tech')">
+                    <i class="fas fa-laptop"></i> Technology
+                </button>
+                <button class="sample-btn" onclick="loadSample('business')">
+                    <i class="fas fa-chart-line"></i> Business
+                </button>
+                <button class="sample-btn" onclick="loadSample('sports')">
+                    <i class="fas fa-football-ball"></i> Sports
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing your article with AI models...</p>
+            <small>This may take 10-30 seconds depending on article length</small>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="results">
+            <!-- Statistics Overview -->
+            <div class="main-card">
+                <h2><i class="fas fa-chart-bar"></i> Quick Stats</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="number" id="wordCount">0</div>
+                        <div class="label">Words</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="sentimentScore">-</div>
+                        <div class="label">Sentiment</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="entityCount">0</div>
+                        <div class="label">Entities Found</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="confidenceScore">0%</div>
+                        <div class="label">Confidence</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification Result -->
+            <div class="main-card">
+                <div class="result-card">
+                    <h3><i class="fas fa-tag"></i> Article Classification</h3>
+                    <div id="classificationResult"></div>
+                </div>
+            </div>
+
+            <!-- Sentiment Analysis -->
+            <div class="main-card">
+                <div class="result-card">
+                    <h3><i class="fas fa-smile"></i> Sentiment Analysis</h3>
+                    <div id="sentimentResult"></div>
+                    <div id="sentimentChart" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Named Entities -->
+            <div class="main-card">
+                <div class="result-card">
+                    <h3><i class="fas fa-users"></i> Named Entities</h3>
+                    <div id="entitiesResult"></div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="main-card">
+                <div class="result-card">
+                    <h3><i class="fas fa-file-alt"></i> Article Summary</h3>
+                    <div id="summaryResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Sample articles
+        const sampleArticles = {
+            tech: `Apple Inc. announced groundbreaking advancements in artificial intelligence during its annual developer conference in Cupertino, California. CEO Tim Cook unveiled new AI features integrated into iOS 18, including real-time language translation and enhanced photo editing capabilities. The company emphasized privacy-first AI, processing most computations on-device rather than in the cloud. Industry analysts predict these innovations could set new standards for mobile AI applications. Apple's stock rose 3.2% following the announcement, reflecting strong investor confidence in the company's AI strategy.`,
+            
+            business: `The Federal Reserve announced a quarter-point interest rate cut today, marking the first reduction in over four years. Fed Chair Jerome Powell stated that the decision reflects growing confidence in declining inflation and a stabilizing economy. Wall Street responded positively, with the Dow Jones Industrial Average surging 400 points in afternoon trading. Economists at Goldman Sachs predict this could signal the beginning of a new monetary easing cycle. Small businesses across the nation are hopeful that lower borrowing costs will stimulate investment and expansion.`,
+            
+            sports: `Manchester United secured a thrilling 3-2 victory over Liverpool at Old Trafford in a Premier League classic. Marcus Rashford scored twice, including a stunning free-kick in the 89th minute that sealed the dramatic comeback. The win moves United to fourth place in the table, reigniting their Champions League qualification hopes. Manager Erik ten Hag praised his team's resilience, stating this performance demonstrated their championship mentality. Over 75,000 fans witnessed what many are calling the match of the season.`
+        };
+
+        function loadSample(type) {
+            document.getElementById('articleText').value = sampleArticles[type];
+        }
+
+        async function analyzeArticle() {
+            const text = document.getElementById('articleText').value.trim();
+            
+            if (text.length < 50) {
+                alert('Please enter at least 50 characters of text.');
+                return;
+            }
+
+            // Show loading, hide results
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.querySelector('.btn-analyze').disabled = true;
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                displayResults(data.results);
+            } catch (error) {
+                alert('Analysis failed: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('.btn-analyze').disabled = false;
+            }
+        }
+
+        function displayResults(results) {
+            // Show results section
+            document.getElementById('results').style.display = 'block';
+
+            // Update stats
+            document.getElementById('wordCount').textContent = results.word_count;
+            document.getElementById('sentimentScore').textContent = 
+                results.sentiment.sentiment.charAt(0).toUpperCase() + 
+                results.sentiment.sentiment.slice(1);
+            
+            const entityCount = Object.values(results.entities)
+                .reduce((sum, arr) => sum + arr.length, 0);
+            document.getElementById('entityCount').textContent = entityCount;
+            document.getElementById('confidenceScore').textContent = 
+                Math.round(results.classification.confidence * 100) + '%';
+
+            // Classification
+            const sentimentClass = results.sentiment.sentiment;
+            const sentimentBadge = `badge-${sentimentClass}`;
+            
+            document.getElementById('classificationResult').innerHTML = `
+                <div>
+                    <span class="badge-custom badge-category">
+                        <i class="fas fa-folder"></i> ${results.classification.category}
+                    </span>
+                    <span class="badge-custom badge-neutral">
+                        Confidence: ${Math.round(results.classification.confidence * 100)}%
+                    </span>
+                </div>
+                <p style="margin-top: 15px; color: #6b7280;">
+                    <strong>Method:</strong> ${results.classification.method}
+                </p>
+            `;
+
+            // Sentiment
+            document.getElementById('sentimentResult').innerHTML = `
+                <div>
+                    <span class="badge-custom ${sentimentBadge}">
+                        ${sentimentClass === 'positive' ? '😊' : sentimentClass === 'negative' ? '😞' : '😐'} 
+                        ${results.sentiment.sentiment.toUpperCase()}
+                    </span>
+                    <span class="badge-custom badge-neutral">
+                        Confidence: ${Math.round(results.sentiment.confidence * 100)}%
+                    </span>
+                </div>
+            `;
+
+            // Sentiment Chart
+            const vaderScores = results.sentiment.detailed_scores.vader;
+            const sentimentData = [{
+                x: ['Positive', 'Neutral', 'Negative'],
+                y: [vaderScores.positive, vaderScores.neutral, vaderScores.negative],
+                type: 'bar',
+                marker: {
+                    color: ['#10b981', '#6b7280', '#ef4444']
+                }
+            }];
+
+            const sentimentLayout = {
+                title: 'Sentiment Score Breakdown (VADER)',
+                yaxis: { title: 'Score', range: [0, 1] },
+                margin: { t: 40, b: 40, l: 40, r: 40 }
+            };
+
+            Plotly.newPlot('sentimentChart', sentimentData, sentimentLayout, {responsive: true});
+
+            // Entities
+            let entitiesHTML = '';
+            for (const [type, entities] of Object.entries(results.entities)) {
+                if (entities.length > 0) {
+                    entitiesHTML += `
+                        <div style="margin-bottom: 15px;">
+                            <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong><br>
+                            ${entities.map(e => `<span class="entity-tag">${e}</span>`).join('')}
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('entitiesResult').innerHTML = 
+                entitiesHTML || '<p style="color: #6b7280;">No entities detected</p>';
+
+            // Summary
+            document.getElementById('summaryResult').innerHTML = `
+                <div>
+                    <h5><i class="fas fa-compress"></i> Extractive Summary:</h5>
+                    <div class="summary-box">
+                        ${results.summary.extractive || 'N/A'}
+                    </div>
+                </div>
+                ${results.summary.abstractive ? `
+                <div style="margin-top: 20px;">
+                    <h5><i class="fas fa-robot"></i> AI-Generated Summary:</h5>
+                    <div class="summary-box">
+                        ${results.summary.abstractive}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
