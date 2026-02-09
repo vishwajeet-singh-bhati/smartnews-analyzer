@@ -1,11 +1,6 @@
-"""
-Test Suite for SmartNews Analyzer
-==================================
-Run this script to verify your installation and test all features.
 
-Usage:
-    python test_project.py
-"""
+##Test Suite for SmartNews Analyzer
+
 
 import sys
 import time
