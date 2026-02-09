@@ -1,11 +1,5 @@
 """
 SmartNews NLP Pipeline
-======================
-This module contains all the NLP processing logic for the project.
-Each function is well-documented for learning purposes.
-
-Author: Your Name
-Date: February 2026
 """
 
 import re
